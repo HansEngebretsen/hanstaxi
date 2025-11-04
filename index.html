@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base & Layout --- */
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: #111827;
+            color: #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 1.5rem;
+            overflow: hidden; 
+        }
+
+        .dashboard-widget {
+            border: 1px solid #4b5563;
+            background-color: #1f2937; /* Solid background color */
+            position: relative; 
+            overflow: hidden; 
+            min-height: 380px;
+            width: 100%;
+            max-width: 500px;
+            display: flex; /* For content-wrapper to fill height */
+        }
+        
+        .content-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header --- */
+        .widget-header {
+            position: relative;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.5);
+        }
+        .widget-title {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+        #dateDisplayContainer {
+            min-width: 175px; /* Prevents jumpy text resizing */
+            text-align: right;
+        }
+        .header-nav-btn {
+            color: #9ca3af;
+            transition: color 0.2s;
+        }
+        .header-nav-btn:hover {
+            color: #ffffff;
+        }
+
+        /* --- Main Content --- */
+        .schedule-section {
+            transition: opacity 0.3s ease-in-out;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .schedule-section.primary { opacity: 1; }
+        .schedule-section.secondary { opacity: 0.4; }
+        .schedule-section.secondary:hover { opacity: 0.7; }
+        
+        .next-time {
+            font-weight: 700;
+            transition: font-size 0.3s ease-in-out;
+        }
+        .primary .next-time { 
+            font-size: 2.25rem; 
+            line-height: 2.5rem; 
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+        .secondary .next-time { 
+            font-size: 1.5rem; 
+            line-height: 2rem; 
+            color: #9ca3af; 
+        }
+        
+        /* Superscript AM/PM Style */
+        .time-period {
+            font-size: 0.65em;
+            vertical-align: baseline;
+            margin-left: 2px;
+            font-weight: 500;
+            color: #9ca3af;
+        }
+
+        /* --- Upcoming Times List --- */
+        .upcoming-times-container {
+            position: relative;
+            overflow-y: auto;
+            max-height: 110px;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .upcoming-times-container::-webkit-scrollbar { display: none; }
+        .scroll-fade {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2rem;
+            background: linear-gradient(to top, #1f2937, transparent);
+            pointer-events: none;
+        }
+        .schedule-time {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: 0 -4px;
+            transition: background-color 0.2s;
+        }
+        .schedule-time:hover {
+             background-color: rgba(55, 65, 81, 0.7);
+        }
+        .add-to-calendar-btn {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.2s ease-in-out, background-color 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 9999px;
+            line-height: 0;
+        }
+        .schedule-time:hover .add-to-calendar-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .add-to-calendar-btn:hover {
+            background-color: rgba(75, 85, 99, 0.9);
+            transform: scale(1.1);
+        }
+
+
+        /* --- Countdown --- */
+        .countdown-wrapper {
+            padding: 1rem;
+            text-align: center;
+            border-top: 1px solid rgba(75, 85, 99, 0.5);
+        }
+
+        /* --- Full Schedule / Date Picker --- */
+        .view-container { 
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out; 
+            overflow: hidden; 
+        }
+        .date-picker-modal, .gcal-modal { 
+            transition: opacity 0.2s ease-in-out; 
+        }
+        .schedule-column {
+            padding: 0.5rem;
+            margin: -0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .schedule-column:hover {
+            background-color: rgba(55, 65, 81, 0.5);
+        }
+        .calendar-day:not(.disabled):hover { background-color: #3b82f6; color: white; }
+        .calendar-day.selected { background-color: #2563eb; color: white; }
+        .calendar-day.disabled { color: #4b5563; cursor: not-allowed; }
+
+        /* --- Dev Tools --- */
+        .dev-tools { 
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+            transform: translateX(110%); 
+        }
+        .range-slider { -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; background: #374151; outline: none; padding: 0; margin: 0; }
+        .range-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #3b82f6; cursor: pointer; transition: background .15s ease-in-out; }
+        .range-slider::-webkit-slider-thumb:hover { background: #60a5fa; }
+
+    </style>
+</head>
+<body>
+    <div class="dashboard-widget rounded-xl shadow-2xl">
+        <div class="content-wrapper">
+            <!-- Header -->
+            <header class="widget-header">
+                <div class="flex items-center justify-between">
+                    <h1 class="widget-title text-lg font-semibold text-blue-300">WS Ferry</h1>
+                    <div id="dateDisplayContainer" class="flex items-center justify-end space-x-2">
+                        <button id="todayBtn" class="header-nav-btn hidden" title="Reset to Today">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.5H12.5A1.5 1.5 0 0 0 14 7V2a.5.5 0 0 1 .5-.5z"/></svg>
+                        </button>
+                        <div id="dateDisplay" class="text-sm text-gray-400 font-medium cursor-pointer hover:text-white transition-colors">// Loading...</div>
+                        <button id="prevDayBtn" class="text-xl p-1 rounded-full hover:bg-gray-700/50 leading-none hidden" aria-label="Previous Day">‹</button>
+                        <button id="nextDayBtn" class="text-xl p-1 rounded-full hover:bg-gray-700/50 leading-none" aria-label="Next Day">›</button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main Content -->
+            <main id="main-content" class="flex-grow flex flex-col">
+                 <div id="live-view" class="view-container flex-grow">
+                    <div class="grid grid-cols-[1fr_auto_1fr] h-full">
+                        <!-- West Seattle -> Downtown -->
+                        <div id="sectionWestSeattle" class="schedule-section p-6 flex flex-col">
+                            <h2 class="text-base font-semibold mb-2 text-gray-400">To Downtown</h2>
+                            <div class="next-time-wrapper">
+                                <p class="next-time text-green-400">-:-- --</p>
+                            </div>
+                            <div class="upcoming-times-container mt-2 flex-grow">
+                                <div class="upcoming-times space-y-1 text-gray-400 text-sm"></div>
+                                <div class="scroll-fade"></div>
+                            </div>
+                        </div>
+                        <!-- Separator -->
+                        <div class="w-px bg-gray-700/50"></div>
+                        <!-- Downtown -> West Seattle -->
+                        <div id="sectionDowntown" class="schedule-section p-6 flex flex-col">
+                            <h2 class="text-base font-semibold mb-2 text-gray-400">To W. Seattle</h2>
+                            <div class="next-time-wrapper">
+                                <p class="next-time text-green-400">-:-- --</p>
+                            </div>
+                            <div class="upcoming-times-container mt-2 flex-grow">
+                                <div class="upcoming-times space-y-1 text-gray-400 text-sm"></div>
+                                <div class="scroll-fade"></div>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+                 <!-- Full Day Schedule View (hidden by default) -->
+                 <div id="full-schedule-view" class="view-container p-6" style="max-height: 0; opacity: 0;">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="schedule-column">
+                            <h2 class="text-base font-semibold mb-3 text-gray-400 text-center">To Downtown</h2>
+                            <div id="full-schedule-west-seattle" class="space-y-1 text-base"></div>
+                        </div>
+                        <div class="schedule-column">
+                            <h2 class="text-base font-semibold mb-3 text-gray-400 text-center">To W. Seattle</h2>
+                            <div id="full-schedule-downtown" class="space-y-1 text-base"></div>
+                        </div>
+                    </div>
+                 </div>
+            </main>
+            
+            <!-- Countdown Footer -->
+            <footer id="live-countdown-wrapper" class="countdown-wrapper">
+                <div id="live-countdown" class="flex items-center justify-center text-lg opacity-80 space-x-1.5">
+                    <div id="countdown-text-group">
+                        <span class="text-sm font-normal">in</span>
+                        <span id="countdown-number" class="font-bold text-xl w-8 text-center inline-block">--</span>
+                        <span class="text-base font-normal">min</span>
+                    </div>
+                    <span id="boarding-now-text" class="hidden">Boarding now</span>
+                </div>
+                <p id="schedule-name" class="text-xs text-gray-500 mt-1"></p>
+            </footer>
+        </div>
+        <a href="https://kingcounty.gov/en/dept/metro/travel-options/water-taxi/west-seattle" target="_blank" rel="noopener noreferrer" class="absolute bottom-4 right-4 text-gray-500 hover:text-white transition-colors z-10" title="View Official Schedule">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
+        </a>
+    </div>
+    
+    <!-- Modals -->
+    <div id="gcal-modal" class="gcal-modal fixed inset-0 bg-gray-900/80 backdrop-blur-sm p-4 hidden flex-col items-center justify-center z-50">
+        <div class="bg-gray-800 text-gray-200 rounded-lg shadow-xl w-full max-w-sm overflow-hidden border border-gray-700">
+            <div class="p-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-blue-500 mr-3 mt-1 flex-shrink-0"></div>
+                        <div>
+                            <h3 id="gcal-title" class="font-bold text-xl leading-tight text-white">🚴‍♂️ Commute</h3>
+                            <p id="gcal-time" class="text-sm text-gray-400">Time details</p>
+                        </div>
+                    </div>
+                    <button id="gcal-close-btn" class="text-2xl text-gray-500 hover:text-white leading-none -mt-2 -mr-2 p-2">&times;</button>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-700/50 border-t border-gray-600 flex justify-end">
+                <a id="gcal-add-btn" href="#" target="_blank" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">Add to calendar</a>
+            </div>
+        </div>
+    </div>
+    <div id="date-picker-modal" class="date-picker-modal fixed inset-0 bg-gray-900/80 backdrop-blur-sm p-4 hidden flex-col items-center justify-center z-50"><div class="bg-gray-800 rounded-lg shadow-xl p-4 w-full max-w-xs"><div class="flex justify-between items-center mb-4"><button id="prevMonthBtn" class="text-xl p-2 rounded-full hover:bg-gray-700/50 leading-none">‹</button><h3 id="monthYear" class="font-bold text-lg"></h3><button id="nextMonthBtn" class="text-xl p-2 rounded-full hover:bg-gray-700/50 leading-none">›</button></div><div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center"></div></div></div>
+    <div id="dev-tools" class="dev-tools fixed top-0 right-0 h-full bg-gray-900/90 backdrop-blur-sm border-l border-gray-700 text-gray-300 shadow-2xl p-6 w-80 space-y-6 z-50"> <p class="font-bold text-xl text-center border-b border-gray-700 pb-3">Dev Tools</p> <div> <div class="flex justify-between items-baseline mb-2"><label for="day-slider" class="text-sm font-semibold text-gray-400">Day Offset</label><span id="day-slider-value" class="text-lg font-bold">Today</span></div> <input type="range" id="day-slider" class="range-slider" min="-7" max="7" value="0"> </div> <div> <div class="flex justify-between items-baseline mb-2"><label for="hour-slider" class="text-sm font-semibold text-gray-400">Hour</label><span id="hour-slider-value" class="text-lg font-bold">00</span></div> <input type="range" id="hour-slider" class="range-slider" min="0" max="23" value="0"> </div> <div> <div class="flex justify-between items-baseline mb-2"><label for="minute-slider" class="text-sm font-semibold text-gray-400">Minute</label><span id="minute-slider-value" class="text-lg font-bold">00</span></div> <input type="range" id="minute-slider" class="range-slider" min="0" max="59" value="0"> </div> <button id="reset-time-btn" class="w-full bg-blue-600 hover:bg-blue-500 rounded p-2 text-sm transition-colors mt-4">Reset to Live Time</button> </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const App = {
+            TRIP_DURATION_MINUTES: 15,
+            SCHEDULES: {
+                // Winter: Oct 11 - Apr 12
+                winter_weekday: { 
+                    downtown: ["05:55", "06:30", "07:05", "07:40", "08:15", "08:50", "10:30", "11:30", "12:30", "13:30", "14:30", "15:25", "16:05", "16:45", "17:25", "18:05", "18:45"],
+                    westSeattle: ["06:15", "06:50", "07:25", "08:00", "08:35", "09:10", "11:00", "12:00", "13:00", "14:00", "15:00", "15:45", "16:25", "17:05", "17:45", "18:25", "19:05"]
+                },
+                winter_weekend: { // Sat & Sun
+                    downtown: ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30", "15:30", "16:30", "17:30", "18:30"],
+                    westSeattle: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"]
+                },
+                // Summer: Apr 13 - Oct 10
+                summer_weekday: { // Mon-Thu
+                    downtown: ["05:55", "06:30", "07:05", "07:40", "08:15", "08:50", "10:30", "11:30", "12:30", "13:30", "14:30", "15:25", "16:05", "16:45", "17:25", "18:05", "18:45"],
+                    westSeattle: ["06:15", "06:50", "07:25", "08:00", "08:35", "09:10", "11:00", "12:00", "13:00", "14:00", "15:00", "15:45", "16:25", "17:05", "17:45", "18:25", "19:05"]
+                },
+                summer_friday: {
+                    downtown: ["05:55", "06:30", "07:05", "07:40", "08:15", "08:50", "10:30", "11:30", "12:30", "13:30", "14:30", "15:25", "16:05", "16:45", "17:25", "18:05", "18:45", "19:30", "20:30", "21:30", "22:45"],
+                    westSeattle: ["06:15", "06:50", "07:25", "08:00", "08:35", "09:10", "11:00", "12:00", "13:00", "14:00", "15:00", "15:45", "16:25", "17:05", "17:45", "18:25", "19:05", "20:00", "21:00", "22:00", "23:00"]
+                },
+                summer_saturday: {
+                    downtown: ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30", "15:30", "16:30", "17:30", "18:30", "19:30", "20:30", "21:30", "22:45"],
+                    westSeattle: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"]
+                },
+                summer_sunday: {
+                    downtown: ["08:30", "09:30", "10:30", "11:30", "12:30", "13:30", "14:30", "15:30", "16:30", "17:30", "18:30"],
+                    westSeattle: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"]
+                }
+            },
+
+            state: { displayDate: new Date(), manualOverride: false, simulatedTime: null, calendarDate: new Date(), animationFrameId: null, lastAnimatedValue: null, lastUpdatedMinute: null },
+
+            dom: {
+                mainContent: document.getElementById('main-content'),
+                dateDisplay: document.getElementById('dateDisplay'),
+                liveView: document.getElementById('live-view'),
+                fullScheduleView: document.getElementById('full-schedule-view'),
+                sectionWestSeattle: document.getElementById('sectionWestSeattle'),
+                sectionDowntown: document.getElementById('sectionDowntown'),
+                fullScheduleWestSeattle: document.getElementById('full-schedule-west-seattle'),
+                fullScheduleDowntown: document.getElementById('full-schedule-downtown'),
+                prevDayBtn: document.getElementById('prevDayBtn'),
+                nextDayBtn: document.getElementById('nextDayBtn'),
+                todayBtn: document.getElementById('todayBtn'),
+                countdownWrapper: document.getElementById('live-countdown-wrapper'),
+                countdownNumber: document.getElementById('countdown-number'),
+                boardingNowText: document.getElementById('boarding-now-text'),
+                countdownTextGroup: document.getElementById('countdown-text-group'),
+                scheduleName: document.getElementById('schedule-name'),
+                datePickerModal: document.getElementById('date-picker-modal'),
+                monthYear: document.getElementById('monthYear'),
+                calendarGrid: document.getElementById('calendar-grid'),
+                prevMonthBtn: document.getElementById('prevMonthBtn'),
+                nextMonthBtn: document.getElementById('nextMonthBtn'),
+                devTools: document.getElementById('dev-tools'),
+                gcalModal: document.getElementById('gcal-modal'),
+                gcalTime: document.getElementById('gcal-time'),
+                gcalAddBtn: document.getElementById('gcal-add-btn'),
+                gcalCloseBtn: document.getElementById('gcal-close-btn'),
+                // Dev tools elements
+                resetTimeBtn: document.getElementById('reset-time-btn'),
+                daySlider: document.getElementById('day-slider'),
+                hourSlider: document.getElementById('hour-slider'),
+                minuteSlider: document.getElementById('minute-slider'),
+                daySliderValue: document.getElementById('day-slider-value'),
+                hourSliderValue: document.getElementById('hour-slider-value'),
+                minuteSliderValue: document.getElementById('minute-slider-value'),
+            },
+
+            init() {
+                this.bindEvents();
+                this.update();
+                setInterval(() => this.update(), 1000);
+            },
+            
+            update() {
+                const now = this.helpers.getCurrentTime();
+                const currentMinute = now.getMinutes();
+                
+                const onDisplayDay = this.helpers.isSameDay(this.state.displayDate, now);
+                this.dom.dateDisplay.innerHTML = this.helpers.formatTo12HourParts(onDisplayDay ? now : this.state.displayDate, true);
+
+                if (currentMinute !== this.state.lastUpdatedMinute || this.state.simulatedTime) {
+                    if (!this.state.simulatedTime) this.state.lastUpdatedMinute = currentMinute;
+                    
+                    if (onDisplayDay || this.state.simulatedTime) {
+                        this.updateScheduleDisplay();
+                    }
+                }
+            },
+
+            bindEvents() {
+                this.dom.prevDayBtn.addEventListener('click', () => this.handlers.navigateDay(-1));
+                this.dom.nextDayBtn.addEventListener('click', () => this.handlers.navigateDay(1));
+                this.dom.todayBtn.addEventListener('click', () => this.handlers.resetToToday());
+                this.dom.sectionWestSeattle.addEventListener('click', (e) => this.handlers.handleSectionClick(e, this.dom.sectionWestSeattle));
+                this.dom.sectionDowntown.addEventListener('click', (e) => this.handlers.handleSectionClick(e, this.dom.sectionDowntown));
+                
+                this.dom.dateDisplay.addEventListener('click', () => this.ui.toggleDatePicker(true));
+                this.dom.datePickerModal.addEventListener('click', (e) => { if(e.target === this.dom.datePickerModal) this.ui.toggleDatePicker(false) });
+                this.dom.prevMonthBtn.addEventListener('click', () => { this.state.calendarDate.setMonth(this.state.calendarDate.getMonth() - 1); this.ui.renderCalendar(); });
+                this.dom.nextMonthBtn.addEventListener('click', () => { this.state.calendarDate.setMonth(this.state.calendarDate.getMonth() + 1); this.ui.renderCalendar(); });
+
+                this.dom.mainContent.addEventListener('click', (e) => this.handlers.handleTimeClick(e));
+                this.dom.gcalCloseBtn.addEventListener('click', () => this.ui.toggleGCalModal(false));
+                this.dom.gcalModal.addEventListener('click', (e) => { if (e.target === this.dom.gcalModal) this.ui.toggleGCalModal(false); });
+                
+                document.addEventListener('keydown', (e) => { if (e.key === 'd') this.dev.toggle() });
+                
+                // Re-add dev tool listeners
+                [this.dom.daySlider, this.dom.hourSlider, this.dom.minuteSlider].forEach(slider => {
+                    if (slider) slider.addEventListener('input', () => this.dev.handleSliderChange());
+                });
+                if (this.dom.resetTimeBtn) this.dom.resetTimeBtn.addEventListener('click', () => this.dev.reset());
+            },
+
+            updateScheduleDisplay() {
+                const now = this.helpers.getCurrentTime();
+                const date = this.state.displayDate;
+                const day = date.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+                const month = date.getMonth(); // 0-11
+                const dayOfMonth = date.getDate();
+                
+                let schedule;
+                let scheduleName = "";
+
+                // Check season: Winter is Oct 11 - Apr 12
+                const isWinter = (month > 9 || (month === 9 && dayOfMonth >= 11)) || // Oct 11 - Dec 31
+                                 (month < 3 || (month === 3 && dayOfMonth <= 12));   // Jan 1 - Apr 12
+
+                if (isWinter) {
+                    if (day > 0 && day < 6) { 
+                        schedule = this.SCHEDULES.winter_weekday; 
+                        scheduleName = "Winter Weekday";
+                    } else { 
+                        schedule = this.SCHEDULES.winter_weekend; 
+                        scheduleName = "Winter Weekend";
+                    }
+                } else { // Summer: Apr 13 - Oct 10
+                    if (day === 5) { // Friday
+                        schedule = this.SCHEDULES.summer_friday; 
+                        scheduleName = "Summer Friday";
+                    } else if (day > 0 && day < 5) { // Mon-Thu
+                        schedule = this.SCHEDULES.summer_weekday; 
+                        scheduleName = "Summer Weekday";
+                    } else if (day === 6) { // Saturday
+                        schedule = this.SCHEDULES.summer_saturday; 
+                        scheduleName = "Summer Saturday";
+                    } else { // Sunday
+                        schedule = this.SCHEDULES.summer_sunday; 
+                        scheduleName = "Summer Sunday";
+                    }
+                }
+                
+                this.dom.scheduleName.textContent = scheduleName;
+                this.ui.updateNavButtons();
+                
+                let primaryNextDeparture = null;
+                if (this.helpers.isSameDay(this.state.displayDate, now)) {
+                    const wsNext = this.ui.updateLiveSection(this.dom.sectionWestSeattle, schedule.westSeattle);
+                    const dtNext = this.ui.updateLiveSection(this.dom.sectionDowntown, schedule.downtown);
+
+                    if (!this.state.manualOverride) {
+                        now.getHours() < 14 ? this.ui.setPrimary(this.dom.sectionWestSeattle) : this.ui.setPrimary(this.dom.sectionDowntown);
+                    }
+                    primaryNextDeparture = this.dom.sectionWestSeattle.classList.contains('primary') ? wsNext : dtNext;
+                    
+                    this.ui.switchView(true);
+                } else {
+                    this.ui.populateFullSchedule(schedule);
+                    this.ui.switchView(false);
+                    this.state.lastAnimatedValue = null;
+                }
+                
+                this.ui.updateCountdown(primaryNextDeparture, now);
+            },
+
+            ui: {
+                setPrimary(primarySection) {
+                    const secondarySection = primarySection === App.dom.sectionWestSeattle ? App.dom.sectionDowntown : App.dom.sectionWestSeattle;
+                    primarySection.classList.add('primary'); primarySection.classList.remove('secondary');
+                    secondarySection.classList.add('secondary'); secondarySection.classList.remove('primary');
+                },
+                
+                updateLiveSection(section, departures) { 
+                    const now = App.helpers.getCurrentTime(); 
+                    const nextTimeStr = App.helpers.findNextDeparture(now, departures); 
+                    const nextTimeWrapper = section.querySelector('.next-time-wrapper');
+                    const nextTimeEl = nextTimeWrapper.querySelector('.next-time'); 
+                    const upcomingTimesEl = section.querySelector('.upcoming-times');
+                    upcomingTimesEl.innerHTML = '';
+                    
+                    const existingIcon = nextTimeWrapper.querySelector('.add-to-calendar-btn');
+                    if (existingIcon) existingIcon.remove();
+                    
+                    if (nextTimeStr) { 
+                        const nextDepartureDate = App.helpers.createDateFromTime(nextTimeStr, now);
+                        nextTimeEl.innerHTML = App.helpers.formatTo12HourParts(nextDepartureDate); 
+                        nextTimeEl.classList.add('text-green-400'); nextTimeEl.classList.remove('text-red-400'); 
+                        
+                        nextTimeWrapper.dataset.time = nextTimeStr;
+                        nextTimeWrapper.dataset.direction = section.id.includes('WestSeattle') ? 'To Downtown' : 'To W. Seattle';
+                        nextTimeWrapper.appendChild(this.createCalendarIcon());
+
+                        const nextIndex = departures.indexOf(nextTimeStr);
+                        departures.slice(nextIndex + 1).forEach(timeStr => {
+                            upcomingTimesEl.appendChild(this.createTimeRow(timeStr, section.id.includes('WestSeattle') ? 'To Downtown' : 'To W. Seattle', now));
+                        });
+                        return nextDepartureDate;
+                    } else { 
+                        nextTimeEl.textContent = "Done";
+                        nextTimeEl.classList.remove('text-green-400'); nextTimeEl.classList.add('text-red-400');
+                        return null;
+                    } 
+                },
+
+                createTimeRow(timeStr, direction, baseDate) {
+                    const rowEl = document.createElement('div');
+                    rowEl.className = 'schedule-time';
+                    rowEl.dataset.time = timeStr;
+                    rowEl.dataset.direction = direction;
+                    
+                    const timeText = document.createElement('span');
+                    timeText.innerHTML = App.helpers.formatTo12HourParts(App.helpers.createDateFromTime(timeStr, baseDate));
+                    
+                    rowEl.appendChild(timeText);
+                    rowEl.appendChild(this.createCalendarIcon());
+                    return rowEl;
+                },
+
+                createCalendarIcon() {
+                    const iconBtn = document.createElement('button');
+                    iconBtn.className = 'add-to-calendar-btn';
+                    iconBtn.title = 'Add to calendar';
+                    iconBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>`;
+                    return iconBtn;
+                },
+
+                populateFullSchedule(schedule) {
+                    const formatRow = (time, direction) => {
+                        const departureDate = App.helpers.createDateFromTime(time, App.state.displayDate);
+                        const arrivalDate = new Date(departureDate.getTime() + App.TRIP_DURATION_MINUTES * 60000);
+                        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>`;
+                        return `<div class="schedule-time" data-time="${time}" data-direction="${direction}">
+                                    <div class="text-center">
+                                        <div class="text-lg">${App.helpers.formatTo12HourParts(departureDate)}</div>
+                                        <div class="text-xs text-gray-400 -mt-1">${App.helpers.formatTo12HourParts(arrivalDate)}</div>
+                                    </div>
+                                    <button class="add-to-calendar-btn" title="Add to calendar">${iconSvg}</button>
+                                </div>`;
+                    };
+                    App.dom.fullScheduleWestSeattle.innerHTML = schedule.westSeattle.map(t => formatRow(t, 'To Downtown')).join('');
+                    App.dom.fullScheduleDowntown.innerHTML = schedule.downtown.map(t => formatRow(t, 'To W. Seattle')).join('');
+                },
+                
+                updateNavButtons() {
+                    const isViewingToday = App.helpers.isSameDay(App.state.displayDate, new Date());
+                    App.dom.todayBtn.classList.toggle('hidden', isViewingToday && !App.state.simulatedTime);
+                    App.dom.prevDayBtn.classList.toggle('hidden', isViewingToday);
+                },
+
+                switchView(showLive) {
+                    App.dom.liveView.style.maxHeight = showLive ? '500px' : '0'; 
+                    App.dom.liveView.style.opacity = showLive ? '1' : '0';
+                    App.dom.fullScheduleView.style.maxHeight = showLive ? '0' : '500px';
+                    App.dom.fullScheduleView.style.opacity = showLive ? '0' : '1';
+                },
+
+                updateCountdown(primaryDeparture, now) {
+                    if (primaryDeparture) {
+                        const diffMinutes = Math.round((primaryDeparture - now) / 60000);
+                        if (diffMinutes <= 0) {
+                            App.dom.countdownTextGroup.classList.add('hidden'); App.dom.boardingNowText.classList.remove('hidden'); App.state.lastAnimatedValue = null;
+                        } else {
+                            App.dom.countdownTextGroup.classList.remove('hidden'); App.dom.boardingNowText.classList.add('hidden'); this.animateCountdownNumber(diffMinutes);
+                        }
+                        App.dom.countdownWrapper.classList.remove('hidden');
+                    } else {
+                        App.dom.countdownWrapper.classList.add('hidden'); App.state.lastAnimatedValue = null;
+                    }
+                },
+
+                animateCountdownNumber(targetValue) {
+                    if (App.state.lastAnimatedValue === targetValue) return;
+                    const startValue = parseInt(App.dom.countdownNumber.textContent) || targetValue;
+                    App.state.lastAnimatedValue = targetValue;
+                    const duration = 600;
+                    let startTime = null;
+                    if (App.state.animationFrameId) cancelAnimationFrame(App.state.animationFrameId);
+                    function step(timestamp) {
+                        if (!startTime) startTime = timestamp;
+                        const elapsed = timestamp - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const easedProgress = 1 - Math.pow(1 - progress, 4); 
+                        const currentValue = Math.round(startValue + (targetValue - startValue) * easedProgress);
+                        App.dom.countdownNumber.textContent = currentValue;
+                        if (progress < 1) App.state.animationFrameId = requestAnimationFrame(step);
+                    }
+                    App.state.animationFrameId = requestAnimationFrame(step);
+                },
+
+                renderCalendar() {
+                    const { calendarGrid, monthYear } = App.dom;
+                    const { calendarDate, displayDate } = App.state;
+                    calendarGrid.innerHTML = '';
+                    monthYear.textContent = calendarDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                    
+                    ['S','M','T','W','T','F','S'].forEach(day => {
+                        const dayEl = document.createElement('div');
+                        dayEl.className = 'font-bold text-xs text-gray-500';
+                        dayEl.textContent = day;
+                        calendarGrid.appendChild(dayEl);
+                    });
+                    
+                    const month = calendarDate.getMonth();
+                    const year = calendarDate.getFullYear();
+                    const firstDayOfMonth = new Date(year, month, 1).getDay();
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    
+                    for (let i = 0; i < firstDayOfMonth; i++) calendarGrid.appendChild(document.createElement('div'));
+                    
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const dayEl = document.createElement('div');
+                        const date = new Date(year, month, i);
+                        dayEl.textContent = i;
+                        dayEl.className = 'calendar-day p-2 rounded-full cursor-pointer transition-colors';
+                        
+                        if (!App.helpers.isTodayOrFuture(date)) {
+                            dayEl.classList.add('disabled');
+                        } else {
+                            if (App.helpers.isSameDay(date, displayDate)) dayEl.classList.add('selected');
+                            dayEl.addEventListener('click', () => {
+                                App.state.displayDate = date;
+                                App.state.simulatedTime = null;
+                                App.updateScheduleDisplay();
+                                this.toggleDatePicker(false);
+                            });
+                        }
+                        calendarGrid.appendChild(dayEl);
+                    }
+                },
+                toggleDatePicker(show) {
+                    if (show) {
+                        App.state.calendarDate = new Date(App.state.displayDate);
+                        this.renderCalendar();
+                        App.dom.datePickerModal.classList.remove('hidden');
+                        App.dom.datePickerModal.classList.add('flex');
+                    } else {
+                        App.dom.datePickerModal.classList.add('hidden');
+                        App.dom.datePickerModal.classList.remove('flex');
+                    }
+                },
+                toggleGCalModal(show, data = {}) {
+                    if (show) {
+                        const { time, direction, link } = data;
+                        App.dom.gcalTime.textContent = `${time} · Ferry Commute ${direction}`;
+                        App.dom.gcalAddBtn.href = link;
+                        App.dom.gcalModal.classList.remove('hidden');
+                        App.dom.gcalModal.classList.add('flex');
+                    } else {
+                        App.dom.gcalModal.classList.add('hidden');
+                        App.dom.gcalModal.classList.remove('flex');
+                    }
+                },
+            },
+            
+            handlers: {
+                navigateDay(offset) {
+                    const newDate = new Date(App.state.displayDate);
+                    newDate.setDate(newDate.getDate() + offset);
+                    if (offset < 0 && !App.helpers.isTodayOrFuture(newDate) && !App.helpers.isSameDay(newDate, new Date())) return;
+                    App.state.simulatedTime = null; App.state.displayDate = newDate; App.state.manualOverride = !App.helpers.isSameDay(newDate, new Date()); App.updateScheduleDisplay();
+                },
+
+                resetToToday() {
+                    App.state.simulatedTime = null; App.state.displayDate = new Date(); App.state.manualOverride = false; App.updateScheduleDisplay();
+                },
+
+                setManualPrimary(section) {
+                    App.state.manualOverride = true; App.ui.setPrimary(section);
+                },
+
+                handleSectionClick(e, section) {
+                    if (!e.target.closest('.add-to-calendar-btn')) {
+                        this.setManualPrimary(section);
+                    }
+                },
+
+                handleTimeClick(e) {
+                    const addBtn = e.target.closest('.add-to-calendar-btn');
+                    if (!addBtn) return;
+
+                    const timeEl = addBtn.closest('.schedule-time, .next-time-wrapper');
+                    if (!timeEl) return;
+
+                    const { time, direction } = timeEl.dataset;
+                    const link = App.helpers.generateGCalLink(time, direction, App.state.displayDate);
+                    
+                    const departureDate = App.helpers.createDateFromTime(time, App.state.displayDate);
+                    const eventStart = new Date(departureDate.getTime() - 25 * 60000);
+                    const arrivalDate = new Date(departureDate.getTime() + App.TRIP_DURATION_MINUTES * 60000);
+                    const eventEnd = new Date(arrivalDate.getTime() + 25 * 60000);
+
+                    App.ui.toggleGCalModal(true, {
+                        time: `${App.helpers.formatTo12Hour(eventStart)} - ${App.helpers.formatTo12Hour(eventEnd)}`,
+                        direction: direction,
+                        link: link,
+                    });
+                }
+            },
+            
+            helpers: {
+                getCurrentTime: () => App.state.simulatedTime ? new Date(App.state.simulatedTime) : new Date(),
+                createDateFromTime: (timeStr, baseDate) => { const [h, m] = timeStr.split(':').map(Number); const d = new Date(baseDate); d.setHours(h, m, 0, 0); return d; },
+                findNextDeparture: (now, departures) => { for (const time of departures) if (App.helpers.createDateFromTime(time, now) > now) return time; return null; },
+                isSameDay: (d1, d2) => d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(),
+                isTodayOrFuture: (d1) => { const today = new Date(); today.setHours(0,0,0,0); return d1 >= today; },
+                formatTo12Hour: (date) => date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                formatTo12HourParts(date, includeDate = false) {
+                    let options = { hour: 'numeric', minute: '2-digit', hour12: true };
+                    if (includeDate) {
+                        options.weekday = 'short';
+                        options.month = 'short';
+                        options.day = 'numeric';
+                    }
+                    const formatted = date.toLocaleString('en-US', options);
+                    const parts = formatted.split(' ');
+                    const period = parts.pop();
+                    const main = parts.join(' ');
+                    return `<span>${main}</span><span class="time-period">${period}</span>`;
+                },
+                generateGCalLink(departureTimeStr, direction, date) {
+                    const departureDate = this.createDateFromTime(departureTimeStr, date);
+                    const eventStart = new Date(departureDate.getTime() - 25 * 60000);
+                    const arrivalDate = new Date(departureDate.getTime() + App.TRIP_DURATION_MINUTES * 60000);
+                    const eventEnd = new Date(arrivalDate.getTime() + 25 * 60000);
+
+                    const pad = (num) => String(num).padStart(2, '0');
+                    const formatDate = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+                    
+                    const url = new URL('https://www.google.com/calendar/render');
+                    url.searchParams.append('action', 'TEMPLATE');
+                    url.searchParams.append('text', '🚴‍♂️ Commute');
+                    url.searchParams.append('dates', `${formatDate(eventStart)}/${formatDate(eventEnd)}`);
+                    url.searchParams.append('details', `Ferry commute: ${direction}`);
+                    url.searchParams.append('trp', 'true');
+
+                    return url.toString();
+                },
+            },
+            
+            dev: {
+                toggle() { const isVisible = App.dom.devTools.style.transform === 'translateX(0px)'; if (!isVisible) this.init(); App.dom.devTools.style.transform = isVisible ? 'translateX(110%)' : 'translateX(0px)'; },
+                init() { const now = new Date(); App.dom.hourSlider.value = now.getHours(); App.dom.minuteSlider.value = now.getMinutes(); App.dom.daySlider.value = 0; this.updateSliderDisplays(); },
+                updateSliderDisplays() { const dayOffset = parseInt(App.dom.daySlider.value, 10); if(dayOffset === 0) App.dom.daySliderValue.textContent = 'Today'; else if(dayOffset === 1) App.dom.daySliderValue.textContent = '+1 day'; else if(dayOffset === -1) App.dom.daySliderValue.textContent = '-1 day'; else App.dom.daySliderValue.textContent = `${dayOffset > 0 ? '+' : ''}${dayOffset} days`; App.dom.hourSliderValue.textContent = String(App.dom.hourSlider.value).padStart(2, '0'); App.dom.minuteSliderValue.textContent = String(App.dom.minuteSlider.value).padStart(2, '0'); },
+                handleSliderChange() { const dayOffset = parseInt(App.dom.daySlider.value, 10); const hour = parseInt(App.dom.hourSlider.value, 10); const minute = parseInt(App.dom.minuteSlider.value, 10); const simTime = new Date(); simTime.setDate(simTime.getDate() + dayOffset); simTime.setHours(hour, minute, 0, 0); App.state.simulatedTime = simTime; App.state.displayDate = new Date(simTime); this.updateSliderDisplays(); App.updateScheduleDisplay(); },
+                reset() { App.state.simulatedTime = null; App.state.displayDate = new Date(); this.init(); App.updateScheduleDisplay(); },
+            }
+        };
+
+        App.init();
+
+    });
+    </script>
+</body>
+</html>
