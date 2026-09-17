@@ -18,11 +18,14 @@
             background-color: #111827;
             color: #d1d5db;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
             min-height: 100vh;
-            padding: 1.5rem;
-            overflow: hidden; 
+            max-height: 100dvh;
+            padding: 1.25rem;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .dashboard-widget {
@@ -31,15 +34,21 @@
             position: relative; 
             overflow: hidden; 
             min-height: 380px;
+            max-height: calc(100dvh - 4rem);
             width: 100%;
             max-width: 500px;
             display: flex; /* For content-wrapper to fill height */
+            flex-direction: column;
         }
         
         .content-wrapper {
             width: 100%;
             display: flex;
             flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
         }
 
         /* --- Header --- */
@@ -100,13 +109,11 @@
         /* --- Upcoming Times List --- */
         .upcoming-times-container {
             position: relative;
-            overflow-y: auto;
+            height: 110px;
             max-height: 110px;
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            flex: 0 0 110px;
         }
-        .upcoming-times-container::-webkit-scrollbar { display: none; }
-        .scroll-fade {
+        .upcoming-times-container::after {
             content: '';
             position: absolute;
             bottom: 0;
@@ -115,18 +122,35 @@
             height: 2rem;
             background: linear-gradient(to top, #1f2937, transparent);
             pointer-events: none;
+            z-index: 10;
         }
+        .upcoming-times {
+            overflow-y: auto;
+            height: 100%;
+            max-height: 110px;
+            padding-bottom: 1.5rem;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .upcoming-times::-webkit-scrollbar { display: none; }
         .schedule-time {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-radius: 4px;
-            padding: 2px 4px;
-            margin: 0 -4px;
+            padding: 2px 6px;
+            margin: 0;
             transition: background-color 0.2s;
         }
         .schedule-time:hover {
              background-color: rgba(55, 65, 81, 0.7);
+        }
+        #full-schedule-view .schedule-time {
+            padding-left: 0;
+            padding-right: 0;
+        }
+        #full-schedule-view .schedule-time:hover {
+            background-color: transparent;
         }
         .add-to-calendar-btn {
             opacity: 0;
@@ -155,16 +179,73 @@
         }
 
         /* --- Full Schedule / Date Picker --- */
+        :root {
+            interpolate-size: allow-keywords;
+        }
+        .reveal-wrapper {
+            overflow: clip;
+            contain: paint;
+            margin: 0;
+            padding: 0;
+            transition: width 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+                        margin-right 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+                        opacity 0.25s ease;
+        }
+        .reveal-x-chevron {
+            width: 0px;
+            margin-right: 0px;
+            opacity: 0;
+            flex-shrink: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }
+        .reveal-x-chevron.is-visible {
+            width: 28px;
+            margin-right: 0.5rem;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .reveal-content-chevron {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
         .view-container { 
             transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out; 
             overflow: hidden; 
+        }
+        .full-schedule-scroll-container {
+            position: relative;
+            max-height: calc(100dvh - 11.5rem);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(156, 163, 175, 0.35) transparent;
+        }
+        .full-schedule-scroll-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        .full-schedule-scroll-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .full-schedule-scroll-container::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.35);
+            border-radius: 9999px;
+        }
+        .full-schedule-scroll-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(156, 163, 175, 0.6);
         }
         .date-picker-modal, .gcal-modal { 
             transition: opacity 0.2s ease-in-out; 
         }
         .schedule-column {
-            padding: 0.5rem;
-            margin: -0.5rem;
+            padding: 0.25rem;
+            margin: 0;
             border-radius: 0.5rem;
             transition: background-color 0.2s ease-in-out;
         }
@@ -182,7 +263,62 @@
         }
         .range-slider { -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; background: #374151; outline: none; padding: 0; margin: 0; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #3b82f6; cursor: pointer; transition: background .15s ease-in-out; }
-        .range-slider::-webkit-slider-thumb:hover { background: #60a5fa; }
+        /* --- Water Taxi Live Status & Schedule Sync Banner --- */
+        #water-taxi-status {
+            font-size: 11px;
+            line-height: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            color: #6b7280;
+        }
+        .status-inline-link {
+            color: #6b7280;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            transition: color 0.15s;
+        }
+        .status-inline-link:hover {
+            color: #9ca3af;
+        }
+        .status-row-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            color: #9ca3af;
+            font-size: 0.7rem;
+        }
+        .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s, background-color 0.2s;
+            background: transparent;
+            border: none;
+            line-height: 0;
+        }
+        .refresh-btn:hover {
+            color: #ffffff;
+            background-color: rgba(55, 65, 81, 0.7);
+        }
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: wait;
+        }
+        .refresh-btn.spinning svg {
+            animation: spinRefresh 0.8s linear infinite;
+        }
+        @keyframes spinRefresh {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
     </style>
 </head>
@@ -192,14 +328,25 @@
             <!-- Header -->
             <header class="widget-header">
                 <div class="flex items-center justify-between">
-                    <h1 class="widget-title text-lg font-semibold text-blue-300">Water Taxi</h1>
-                    <div id="dateDisplayContainer" class="flex items-center justify-end space-x-2">
-                        <button id="todayBtn" class="header-nav-btn hidden" title="Reset to Today">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.5H12.5A1.5 1.5 0 0 0 14 7V2a.5.5 0 0 1 .5-.5z"/></svg>
-                        </button>
-                        <div id="dateDisplay" class="text-sm text-gray-400 font-medium cursor-pointer hover:text-white transition-colors">// Loading...</div>
-                        <button id="prevDayBtn" class="text-xl p-1 rounded-full hover:bg-gray-700/50 leading-none hidden" aria-label="Previous Day">‹</button>
-                        <button id="nextDayBtn" class="text-xl p-1 rounded-full hover:bg-gray-700/50 leading-none" aria-label="Next Day">›</button>
+                    <div class="flex items-center">
+                        <div id="backToTodayWrapper" class="reveal-wrapper reveal-x-chevron">
+                            <div class="reveal-content-chevron">
+                                <button id="backToTodayBtn" class="p-1 rounded-full hover:bg-gray-700/50 text-gray-300 hover:text-white flex items-center justify-center w-7 h-7 transition-colors" aria-label="Back to Today" title="Back to Today">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="widget-title text-lg font-semibold text-blue-300 leading-tight">Water Taxi</h1>
+                            <p id="schedule-name" class="text-[11px] text-gray-400 font-normal leading-tight mt-0.5"></p>
+                        </div>
+                    </div>
+                    <div id="dateDisplayContainer" class="flex items-center justify-end space-x-1.5">
+                        <div id="dateDisplay" class="text-sm text-gray-400 font-medium cursor-pointer hover:text-white transition-colors mr-0.5" title="Click to open calendar">// Loading...</div>
+                        <div class="flex items-center space-x-0.5">
+                            <button id="prevDayBtn" style="display: none;" class="text-xl p-1 rounded-full hover:bg-gray-700/50 text-gray-300 hover:text-white leading-none flex items-center justify-center w-7 h-7" aria-label="Previous Day" title="Previous Day">‹</button>
+                            <button id="nextDayBtn" class="text-xl p-1 rounded-full hover:bg-gray-700/50 text-gray-300 hover:text-white leading-none flex items-center justify-center w-7 h-7" aria-label="Next Day" title="Next Day">›</button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -216,7 +363,6 @@
                             </div>
                             <div class="upcoming-times-container mt-2 flex-grow">
                                 <div class="upcoming-times space-y-1 text-gray-400 text-sm"></div>
-                                <div class="scroll-fade"></div>
                             </div>
                         </div>
                         <!-- Separator -->
@@ -229,21 +375,26 @@
                             </div>
                             <div class="upcoming-times-container mt-2 flex-grow">
                                 <div class="upcoming-times space-y-1 text-gray-400 text-sm"></div>
-                                <div class="scroll-fade"></div>
                             </div>
                         </div>
                     </div>
                  </div>
                  <!-- Full Day Schedule View (hidden by default) -->
-                 <div id="full-schedule-view" class="view-container p-6" style="max-height: 0; opacity: 0;">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="schedule-column">
-                            <h2 class="text-base font-semibold mb-3 text-gray-400 text-center">To Downtown</h2>
-                            <div id="full-schedule-west-seattle" class="space-y-1 text-base"></div>
-                        </div>
-                        <div class="schedule-column">
-                            <h2 class="text-base font-semibold mb-3 text-gray-400 text-center">To W. Seattle</h2>
-                            <div id="full-schedule-downtown" class="space-y-1 text-base"></div>
+                 <div id="full-schedule-view" class="view-container flex flex-col" style="max-height: 0; opacity: 0;">
+                    <div class="grid grid-cols-[1fr_auto_1fr] px-6 pt-6 pb-2">
+                        <h2 class="text-base font-semibold text-gray-400 text-left">To Downtown</h2>
+                        <div class="w-px mx-6"></div>
+                        <h2 class="text-base font-semibold text-gray-400 text-left">To W. Seattle</h2>
+                    </div>
+                    <div class="full-schedule-scroll-container px-6 pb-6">
+                        <div class="grid grid-cols-[1fr_auto_1fr]">
+                            <div class="schedule-column pr-6">
+                                <div id="full-schedule-west-seattle" class="space-y-1 text-gray-300 text-sm"></div>
+                            </div>
+                            <div class="w-px bg-gray-700/50"></div>
+                            <div class="schedule-column pl-6">
+                                <div id="full-schedule-downtown" class="space-y-1 text-gray-300 text-sm"></div>
+                            </div>
                         </div>
                     </div>
                  </div>
@@ -251,20 +402,25 @@
             
             <!-- Countdown Footer -->
             <footer id="live-countdown-wrapper" class="countdown-wrapper">
-                <div id="live-countdown" class="flex items-center justify-center text-lg opacity-80 space-x-1.5">
-                    <div id="countdown-text-group">
-                        <span class="text-sm font-normal">in</span>
-                        <span id="countdown-number" class="font-bold text-xl w-8 text-center inline-block">--</span>
-                        <span class="text-base font-normal">min</span>
+                <div id="live-countdown" class="flex items-center justify-center text-lg opacity-90 space-x-1">
+                    <div id="countdown-text-group" class="flex items-baseline justify-center space-x-1">
+                        <span id="countdown-prefix-text" class="text-base font-normal text-gray-300">leaves in</span>
+                        <span class="font-bold text-xl text-white"><span id="countdown-number">--</span>m</span>
                     </div>
-                    <span id="boarding-now-text" class="hidden">Boarding now</span>
+                    <span id="boarding-now-text" class="hidden font-semibold text-green-400">Boarding now</span>
                 </div>
-                <p id="schedule-name" class="text-xs text-gray-500 mt-1"></p>
+                <div id="water-taxi-status" class="mt-1"></div>
             </footer>
         </div>
-        <a href="https://kingcounty.gov/en/dept/metro/travel-options/water-taxi/west-seattle" target="_blank" rel="noopener noreferrer" class="absolute bottom-4 right-4 text-gray-500 hover:text-white transition-colors z-10" title="View Official Schedule">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
-        </a>
+    </div>
+
+    <!-- External Sync Footer Outside Card -->
+    <div id="external-sync-footer" class="w-full max-w-[500px] mt-1.5 flex items-center justify-end space-x-1.5 text-[10px] text-gray-400">
+        <span id="live-updated-ago-text">updated live just now</span>
+        <a href="https://kingcounty.gov/en/dept/metro/travel-options/water-taxi/west-seattle" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-200 transition-colors">view schedule</a>
+        <button id="refresh-schedule-btn" type="button" class="refresh-btn" title="Refresh live status & schedule" aria-label="Refresh schedule">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+        </button>
     </div>
     
     <!-- Modals -->
@@ -291,6 +447,241 @@
     <div id="dev-tools" class="dev-tools fixed top-0 right-0 h-full bg-gray-900/90 backdrop-blur-sm border-l border-gray-700 text-gray-300 shadow-2xl p-6 w-80 space-y-6 z-50"> <p class="font-bold text-xl text-center border-b border-gray-700 pb-3">Dev Tools</p> <div> <div class="flex justify-between items-baseline mb-2"><label for="day-slider" class="text-sm font-semibold text-gray-400">Day Offset</label><span id="day-slider-value" class="text-lg font-bold">Today</span></div> <input type="range" id="day-slider" class="range-slider" min="-7" max="7" value="0"> </div> <div> <div class="flex justify-between items-baseline mb-2"><label for="hour-slider" class="text-sm font-semibold text-gray-400">Hour</label><span id="hour-slider-value" class="text-lg font-bold">00</span></div> <input type="range" id="hour-slider" class="range-slider" min="0" max="23" value="0"> </div> <div> <div class="flex justify-between items-baseline mb-2"><label for="minute-slider" class="text-sm font-semibold text-gray-400">Minute</label><span id="minute-slider-value" class="text-lg font-bold">00</span></div> <input type="range" id="minute-slider" class="range-slider" min="0" max="59" value="0"> </div> <button id="reset-time-btn" class="w-full bg-blue-600 hover:bg-blue-500 rounded p-2 text-sm transition-colors mt-4">Reset to Live Time</button> </div>
 
     <script>
+    const TRACKER_URL = "https://wsdot.com/ferries/vesselwatch/watertaxiwatch.aspx?ula=47.595&ulo=-122.356397&z=14";
+    const WSDOT_VESSELS_API = "https://www.wsdot.wa.gov/ferries/api/vessels/rest/vessellocations?apiaccesscode=7832c60d-ff5c-4e66-8bea-ae89412cbe7f";
+    const OBA_SCHEDULE_ROUTE_ID = "1_100336"; // Official GTFS ID for King County Water Taxi Route 973 (West Seattle <-> Downtown)
+    const STORAGE_KEY_SCHEDULE_SYNC = "hanstaxi_schedule_sync_v1";
+
+    // Date Parsing Utility for WSDOT .NET WCF date strings & epoch dates
+    function parseWcfDate(dateStr) {
+        if (!dateStr) return null;
+        if (dateStr instanceof Date) return dateStr;
+        if (typeof dateStr === 'number') return new Date(dateStr);
+        const match = /\/Date\((\d+)(?:[+-]\d+)?\)\//.exec(String(dateStr));
+        return match ? new Date(parseInt(match[1], 10)) : new Date(dateStr);
+    }
+
+    function formatTime(date) {
+        if (!date || isNaN(date.getTime())) return "--:--";
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    // Step 1: Fetch published daily timetable (OneBusAway Route 973 / GTFS 1_100336)
+    async function fetchDailySchedule(targetDate = new Date()) {
+        const y = targetDate.getFullYear();
+        const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const d = String(targetDate.getDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+
+        // Query Route 1_100336 (actual GTFS ID for Route 973) with fallback to default service date and 1_973 alias
+        const endpoints = [
+            `https://api.pugetsound.onebusaway.org/api/where/schedule-for-route/${OBA_SCHEDULE_ROUTE_ID}.json?key=TEST&date=${dateStr}`,
+            `https://api.pugetsound.onebusaway.org/api/where/schedule-for-route/${OBA_SCHEDULE_ROUTE_ID}.json?key=TEST`,
+            `https://api.pugetsound.onebusaway.org/api/where/schedule-for-route/1_973.json?key=TEST&date=${dateStr}`
+        ];
+
+        for (const url of endpoints) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) continue;
+                const json = await res.json();
+                const stopGroupings = json.data?.entry?.schedule?.stopTripGroupings || json.data?.entry?.stopTripGroupings || [];
+                if (stopGroupings.length > 0) {
+                    return stopGroupings;
+                }
+            } catch (e) {
+                // Continue to next fallback endpoint
+            }
+        }
+        return [];
+    }
+
+    // Step 2: Cross-check timetable with live vessel telemetry
+    function reconcileScheduleWithLive(scheduledTrips, liveVessel, direction) {
+        // direction: 'to-seattle' (origin: Seacrest) | 'to-west-seattle' (origin: Pier 50)
+        const targetDock = direction === 'to-seattle' ? 'Seattle Pier 50' : 'Seacrest Dock';
+        const originStopId = direction === 'to-seattle' ? '1_99997' : '1_1889';
+        const targetDirId = direction === 'to-seattle' ? '1' : '0';
+        const nowDate = window.App ? window.App.helpers.getCurrentTime() : new Date();
+        const now = nowDate.getTime();
+        const midnight = new Date(nowDate);
+        midnight.setHours(0, 0, 0, 0);
+        const midnightMs = midnight.getTime();
+
+        const matchingGroups = (scheduledTrips || []).filter(g => {
+            if (String(g.directionId) === targetDirId) return true;
+            if (Array.isArray(g.stopIds) && g.stopIds[0] === originStopId) return true;
+            return false;
+        });
+        const groupsToSearch = matchingGroups.length > 0 ? matchingGroups : (scheduledTrips || []);
+
+        // Find next upcoming scheduled departure from timetable
+        const nextScheduled = groupsToSearch
+            .flatMap(group => group.trips || group.tripsWithStopTimes || [])
+            .flatMap(trip => {
+                const sts = trip.stopTimes || [];
+                const originSt = sts.find(st => st.stopId === originStopId) || sts[0];
+                return originSt ? [originSt] : [];
+            })
+            .map(st => {
+                const rawDep = Number(st.departureTime);
+                // OBA schedule-for-route returns seconds since midnight (< 200000); handle both epoch seconds and seconds-from-midnight
+                return rawDep < 200000
+                    ? new Date(midnightMs + rawDep * 1000)
+                    : new Date(rawDep * 1000);
+            })
+            .filter(depTime => depTime.getTime() > now - 10 * 60 * 1000) // within last 10m or future
+            .sort((a, b) => a - b)[0] || null;
+
+        // If live vessel is tracking the current active trip
+        if (liveVessel && liveVessel.ArrivingTerminalName === targetDock) {
+            const liveSchedDepart = parseWcfDate(liveVessel.ScheduledDeparture);
+            const liveEta = parseWcfDate(liveVessel.Eta);
+
+            // Verify timetable departure matches vessel reported departure
+            const departureTime = liveSchedDepart || nextScheduled || new Date(now);
+
+            // Standard transit crossing is ~10-15 mins. Delay threshold = 5 mins.
+            const expectedArrival = new Date(departureTime.getTime() + 15 * 60 * 1000);
+            const delayMinutes = liveEta
+                ? Math.round((liveEta - expectedArrival) / 60000)
+                : (liveVessel.ScheduleDeviationSeconds ? Math.round(liveVessel.ScheduleDeviationSeconds / 60) : 0);
+            const isDelayed = delayMinutes >= 5;
+
+            return {
+                status: isDelayed ? `Delayed (+${delayMinutes}m)` : "On time",
+                delayMinutes: Math.max(0, delayMinutes),
+                isDelayed: isDelayed,
+                scheduledDeparture: departureTime,
+                estimatedArrival: liveEta || expectedArrival,
+                isLiveSynced: true
+            };
+        }
+
+        // Fallback when no vessel telemetry is streaming (docked/off-peak)
+        return {
+            status: "Scheduled",
+            delayMinutes: 0,
+            isDelayed: false,
+            scheduledDeparture: nextScheduled,
+            estimatedArrival: nextScheduled ? new Date(nextScheduled.getTime() + 15 * 60 * 1000) : null,
+            isLiveSynced: false
+        };
+    }
+
+    function formatShortDockName(fullName) {
+        if (!fullName) return "dock";
+        const lower = String(fullName).toLowerCase();
+        if (lower.includes("seacrest")) return "Seacrest";
+        if (lower.includes("pier 50") || lower.includes("downtown") || lower.includes("seattle")) return "Pier 50";
+        return fullName;
+    }
+
+    // Relative time formatter: min (<60m), hours + min (<24h), days (>=24h)
+    function formatRelativeTimeAgo(timestampMs, nowMs = Date.now()) {
+        if (!timestampMs || isNaN(timestampMs)) {
+            return "updated live just now";
+        }
+        const diffMs = Math.max(0, nowMs - timestampMs);
+        const totalMinutes = Math.floor(diffMs / 60000);
+
+        if (totalMinutes < 1) {
+            return "updated live just now";
+        }
+        if (totalMinutes < 60) {
+            return `updated live ${totalMinutes} min ago`;
+        }
+        if (totalMinutes < 1440) {
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            const hourLabel = hours === 1 ? "hour" : "hours";
+            if (mins === 0) {
+                return `updated live ${hours} ${hourLabel} ago`;
+            }
+            return `updated live ${hours} ${hourLabel} ${mins} min ago`;
+        }
+        const days = Math.floor(totalMinutes / 1440);
+        const dayLabel = days === 1 ? "day" : "days";
+        return `updated live ${days} ${dayLabel} ago`;
+    }
+
+    // Step 3: UI Injection & Status Logic (Location icon + vessel status replacing schedule-name)
+    function renderWaterTaxiStatus(vessel, selectedDirection) {
+        const statusContainer = document.getElementById("water-taxi-status");
+        if (!statusContainer) return;
+
+        const isViewingToday = window.App?.helpers
+            ? window.App.helpers.isSameDay(window.App.state.displayDate, new Date())
+            : true;
+
+        // Only show vessel status when viewing today AND live vessel telemetry is available
+        if (!isViewingToday || !vessel) {
+            statusContainer.replaceChildren();
+            statusContainer.classList.add("hidden");
+            if (window.App && typeof window.App.updateExternalSyncFooter === "function") {
+                window.App.updateExternalSyncFooter();
+            }
+            return;
+        }
+
+        statusContainer.classList.remove("hidden");
+
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" viewBox="0 0 16 16" class="inline-block flex-shrink-0"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>',
+            'image/svg+xml'
+        );
+        const locationIcon = svgDoc.documentElement;
+
+        const getDockLabel = (terminalName) => {
+            if (!terminalName) return "pier 50";
+            const lower = terminalName.toLowerCase();
+            if (lower.includes("seacrest") || lower.includes("west seattle")) return "seacrest";
+            return "pier 50";
+        };
+
+        const getDestinationLabel = (terminalName) => {
+            if (!terminalName) return "Downtown";
+            const lower = terminalName.toLowerCase();
+            if (lower.includes("seacrest") || lower.includes("west seattle")) return "WS";
+            return "Downtown";
+        };
+
+        const vesselName = vessel.VesselName || "Doc Maynard";
+        const isUnderway = Boolean(vessel.AtDock === false);
+
+        const prefixSpan = document.createElement("span");
+        prefixSpan.textContent = `${vesselName} `;
+
+        const inlineLink = document.createElement("a");
+        inlineLink.href = TRACKER_URL;
+        inlineLink.target = "_blank";
+        inlineLink.rel = "noopener noreferrer";
+        inlineLink.className = "status-inline-link";
+
+        const suffixSpan = document.createElement("span");
+
+        if (isUnderway) {
+            const destLabel = getDestinationLabel(vessel.ArrivingTerminalName);
+            inlineLink.textContent = "in water";
+            suffixSpan.textContent = ` heading towards ${destLabel}`;
+        } else {
+            const dockLabel = getDockLabel(vessel.DepartingTerminalName || vessel.ArrivingTerminalName);
+            inlineLink.textContent = "currently docked";
+            suffixSpan.textContent = ` at ${dockLabel}`;
+        }
+
+        const textWrapper = document.createElement("span");
+        textWrapper.append(prefixSpan, inlineLink, suffixSpan);
+
+        statusContainer.replaceChildren(locationIcon, textWrapper);
+
+        // Also update the external sync bar outside the card
+        if (window.App && typeof window.App.updateExternalSyncFooter === "function") {
+            window.App.updateExternalSyncFooter();
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
 
         const App = {
@@ -324,7 +715,23 @@
                 }
             },
 
-            state: { displayDate: new Date(), manualOverride: false, simulatedTime: null, calendarDate: new Date(), animationFrameId: null, lastAnimatedValue: null, lastUpdatedMinute: null },
+            state: {
+                displayDate: new Date(),
+                manualOverride: false,
+                simulatedTime: null,
+                calendarDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                animationFrameId: null,
+                lastAnimatedValue: null,
+                lastUpdatedMinute: null,
+                // Live Tracking & Schedule Reconciliation State
+                liveVessel: null,
+                stopGroupings: [],
+                liveScheduleMap: {},
+                cachedScheduleByType: {},
+                lastScheduleSync: null,
+                liveScheduleVerified: false,
+                isSyncingSchedule: false
+            },
 
             dom: {
                 mainContent: document.getElementById('main-content'),
@@ -337,7 +744,7 @@
                 fullScheduleDowntown: document.getElementById('full-schedule-downtown'),
                 prevDayBtn: document.getElementById('prevDayBtn'),
                 nextDayBtn: document.getElementById('nextDayBtn'),
-                todayBtn: document.getElementById('todayBtn'),
+                backToTodayBtn: document.getElementById('backToTodayBtn'),
                 countdownWrapper: document.getElementById('live-countdown-wrapper'),
                 countdownNumber: document.getElementById('countdown-number'),
                 boardingNowText: document.getElementById('boarding-now-text'),
@@ -364,9 +771,392 @@
             },
 
             init() {
+                window.App = this;
+                this.loadCachedSyncState();
                 this.bindEvents();
+                // (1) Initial page load immediately renders static/cached schedule
                 this.update();
+                this.updateStatusBanner();
+                // (2) Fire initial live status call + live schedule reconciliation call
+                this.refreshLiveAndSchedule(false);
+                // Periodic clock update (every 1s) and live telemetry polling (every 60s)
                 setInterval(() => this.update(), 1000);
+                setInterval(() => this.refreshLiveVesselOnly(), 60000);
+            },
+
+            loadCachedSyncState() {
+                // Seed cachedScheduleByType with all official schedules so every day always has a cached fallback
+                this.state.cachedScheduleByType = JSON.parse(JSON.stringify(this.SCHEDULES));
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY_SCHEDULE_SYNC);
+                    if (raw) {
+                        const cached = JSON.parse(raw);
+                        if (cached) {
+                            if (cached.lastScheduleSync) {
+                                this.state.lastScheduleSync = cached.lastScheduleSync;
+                            }
+                            this.state.liveScheduleVerified = Boolean(cached.liveScheduleVerified);
+                            if (cached.liveScheduleMap && typeof cached.liveScheduleMap === 'object') {
+                                this.state.liveScheduleMap = cached.liveScheduleMap;
+                            }
+                            if (cached.cachedScheduleByType && typeof cached.cachedScheduleByType === 'object') {
+                                this.state.cachedScheduleByType = {
+                                    ...this.state.cachedScheduleByType,
+                                    ...cached.cachedScheduleByType
+                                };
+                            }
+                        }
+                    }
+                    this.saveCachedSyncState();
+                } catch (e) {
+                    // Ignore storage read errors
+                }
+            },
+
+            saveCachedSyncState() {
+                try {
+                    localStorage.setItem(STORAGE_KEY_SCHEDULE_SYNC, JSON.stringify({
+                        lastScheduleSync: this.state.lastScheduleSync,
+                        liveScheduleVerified: this.state.liveScheduleVerified,
+                        liveScheduleMap: this.state.liveScheduleMap,
+                        cachedScheduleByType: this.state.cachedScheduleByType
+                    }));
+                } catch (e) {
+                    // Ignore storage write errors
+                }
+            },
+
+            getScheduleInfoForDate(date) {
+                const day = date.getDay();
+                const month = date.getMonth();
+                const dayOfMonth = date.getDate();
+                const isWinter = (month > 9 || (month === 9 && dayOfMonth >= 11)) ||
+                                 (month < 3 || (month === 3 && dayOfMonth <= 12));
+                if (isWinter) {
+                    return (day > 0 && day < 6)
+                        ? { type: 'winter_weekday', name: 'Winter Weekday' }
+                        : { type: 'winter_weekend', name: 'Winter Weekend' };
+                }
+                if (day === 5) return { type: 'summer_friday', name: 'Summer Friday' };
+                if (day > 0 && day < 5) return { type: 'summer_weekday', name: 'Summer Weekday' };
+                if (day === 6) return { type: 'summer_saturday', name: 'Summer Saturday' };
+                return { type: 'summer_sunday', name: 'Summer Sunday' };
+            },
+
+            getDateKey(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            },
+
+            getSelectedDirection() {
+                return this.dom.sectionWestSeattle.classList.contains('primary')
+                    ? 'to-seattle'
+                    : 'to-west-seattle';
+            },
+
+            updateStatusBanner() {
+                renderWaterTaxiStatus(this.state.liveVessel, this.getSelectedDirection());
+                this.updateExternalSyncFooter();
+            },
+
+            updateExternalSyncFooter() {
+                const textEl = document.getElementById('live-updated-ago-text');
+                const btnEl = document.getElementById('refresh-schedule-btn');
+                if (textEl) {
+                    if (this.state.isSyncingSchedule) {
+                        textEl.textContent = "updating live...";
+                    } else {
+                        textEl.textContent = formatRelativeTimeAgo(this.state.lastScheduleSync, Date.now());
+                    }
+                }
+                if (btnEl) {
+                    btnEl.disabled = Boolean(this.state.isSyncingSchedule);
+                    btnEl.classList.toggle('spinning', Boolean(this.state.isSyncingSchedule));
+                }
+            },
+
+            async fetchKcmLiveVessel() {
+                // Fetch live King County Marine vessels from local proxy (/api/wsdot-kcm -> WSDOT VesselsKCM.ashx)
+                try {
+                    const res = await fetch('/api/wsdot-kcm', { headers: { Accept: 'application/json' } });
+                    if (!res.ok) return null;
+                    const data = await res.json();
+                    const list = data.vessellist || [];
+                    // Find active West Seattle Water Taxi (WS-SEA) or Doc Maynard / Sally Fox
+                    const kcm = list.find(v => v.route === 'WS-SEA' && String(v.inservice).toLowerCase() === 'true') ||
+                                list.find(v => v.name === 'Doc Maynard' || v.name === 'Sally Fox');
+                    if (!kcm) return null;
+
+                    const speedVal = Number(kcm.speed) || 0;
+                    const isAtDock = speedVal <= 0.5 || kcm.headtxt === 'Stopped';
+                    const nextDepStr = kcm.nextdep ? `${kcm.nextdep} ${kcm.nextdepAMPM || ''}`.trim() : null;
+                    const etaStr = (kcm.eta && kcm.eta !== 'Calculating') ? `${kcm.eta} ${kcm.etaAMPM || ''}`.trim() : null;
+
+                    return {
+                        VesselName: kcm.name || "Doc Maynard",
+                        Latitude: Number(kcm.lat) || 47.595,
+                        Longitude: Number(kcm.lon) || -122.356397,
+                        Speed: speedVal,
+                        Heading: Number(kcm.head) || 0,
+                        AtDock: isAtDock,
+                        InService: String(kcm.inservice).toLowerCase() === 'true',
+                        OpRouteAbbrev: ["ws-sea"],
+                        DepartingTerminalName: kcm.lastdock || "Seacrest Dock",
+                        ArrivingTerminalName: kcm.aterm || "Seattle Pier 50",
+                        NextDep: nextDepStr,
+                        EtaText: etaStr,
+                        ScheduledDeparture: null,
+                        Eta: null,
+                        Source: "WSDOT-KCM"
+                    };
+                } catch (e) {
+                    return null;
+                }
+            },
+
+            async fetchWsdotVesselLocation() {
+                // Attempt direct fetch first; fall back to JSONP script injection if CORS blocks
+                try {
+                    const res = await fetch(WSDOT_VESSELS_API, { headers: { Accept: 'application/json' } });
+                    if (res.ok) {
+                        const data = await res.json();
+                        return this.filterWestSeattleVessel(data);
+                    }
+                } catch (e) {
+                    // Direct fetch blocked by CORS, fallback to JSONP
+                }
+
+                return new Promise((resolve) => {
+                    const cbName = '__wsdotJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                    const script = document.createElement('script');
+                    let settled = false;
+
+                    const cleanup = () => {
+                        delete window[cbName];
+                        if (script.parentNode) script.parentNode.removeChild(script);
+                    };
+
+                    const timer = setTimeout(() => {
+                        if (!settled) {
+                            settled = true;
+                            cleanup();
+                            resolve(null);
+                        }
+                    }, 4500);
+
+                    window[cbName] = (data) => {
+                        if (!settled) {
+                            settled = true;
+                            clearTimeout(timer);
+                            cleanup();
+                            resolve(this.filterWestSeattleVessel(Array.isArray(data) ? data : []));
+                        }
+                    };
+
+                    script.src = `${WSDOT_VESSELS_API}&callback=${cbName}`;
+                    script.onerror = () => {
+                        if (!settled) {
+                            settled = true;
+                            clearTimeout(timer);
+                            cleanup();
+                            resolve(null);
+                        }
+                    };
+                    document.head.appendChild(script);
+                });
+            },
+
+            filterWestSeattleVessel(data) {
+                if (!Array.isArray(data)) return null;
+                // Exact filter for King County Water Taxi on the West Seattle route
+                return data.find(v =>
+                    v.OpRouteAbbrev?.includes("ws-sea") ||
+                    (v.DepartingTerminalName?.includes("Seacrest") || v.ArrivingTerminalName?.includes("Seacrest"))
+                ) || null;
+            },
+
+            async fetchObaLiveVessel() {
+                // OneBusAway live vehicle telemetry for Route 973 (GTFS 1_100336) with full CORS support
+                try {
+                    const res = await fetch(`https://api.pugetsound.onebusaway.org/api/where/trips-for-route/${OBA_SCHEDULE_ROUTE_ID}.json?key=TEST&includeStatus=true`);
+                    if (!res.ok) return null;
+                    const json = await res.json();
+                    const trips = json.data?.list || [];
+                    if (trips.length === 0) return null;
+
+                    // Find active trip with live status
+                    const activeTrips = trips.filter(t => t.status && (t.status.activeTripId || t.status.position));
+                    if (activeTrips.length === 0) return null;
+
+                    // Pick the trip currently closest to active service
+                    activeTrips.sort((a, b) => Math.abs(a.status.nextStopTimeOffset || 9999) - Math.abs(b.status.nextStopTimeOffset || 9999));
+                    const active = activeTrips[0];
+                    const st = active.status;
+                    const sched = active.schedule;
+
+                    const headingToPier50 = st.nextStop === '1_1889';
+                    const arrivingDock = headingToPier50 ? 'Seattle Pier 50' : 'Seacrest Dock';
+                    const departingDock = headingToPier50 ? 'Seacrest Dock' : 'Seattle Pier 50';
+
+                    // Compute ScheduledDeparture Date from serviceDate + origin stop departureTime
+                    const serviceDateMs = Number(active.serviceDate) || new Date().setHours(0, 0, 0, 0);
+                    const originStopTime = sched?.stopTimes?.[0]?.departureTime || 0;
+                    const schedDepartDate = originStopTime > 0
+                        ? new Date(serviceDateMs + originStopTime * 1000)
+                        : new Date();
+
+                    const nowMs = Date.now();
+                    let etaDate = null;
+                    if (typeof st.nextStopTimeOffset === 'number' && st.nextStopTimeOffset > 0 && st.nextStopTimeOffset < 3600) {
+                        etaDate = new Date(nowMs + st.nextStopTimeOffset * 1000);
+                    } else {
+                        etaDate = new Date(schedDepartDate.getTime() + 15 * 60 * 1000 + (st.scheduleDeviation || 0) * 1000);
+                    }
+
+                    const isAtDock = Boolean(
+                        (st.phase && st.phase.includes('LAYOVER')) ||
+                        (typeof st.distanceAlongTrip === 'number' && st.distanceAlongTrip < 60) ||
+                        nowMs < schedDepartDate.getTime()
+                    );
+
+                    return {
+                        VesselName: "Doc Maynard",
+                        Latitude: st.position?.lat || 47.595,
+                        Longitude: st.position?.lon || -122.356397,
+                        Speed: isAtDock ? 0.0 : 13.5,
+                        Heading: Math.round(st.orientation || 0),
+                        AtDock: isAtDock,
+                        InService: true,
+                        OpRouteAbbrev: ["ws-sea"],
+                        DepartingTerminalName: departingDock,
+                        ArrivingTerminalName: arrivingDock,
+                        ScheduledDeparture: `/Date(${schedDepartDate.getTime()}-0700)/`,
+                        Eta: etaDate ? `/Date(${etaDate.getTime()}-0700)/` : null,
+                        ScheduleDeviationSeconds: st.scheduleDeviation || 0,
+                        Source: "OneBusAway-Live"
+                    };
+                } catch (e) {
+                    return null;
+                }
+            },
+
+            extractScheduleFromGroupings(stopGroupings) {
+                if (!Array.isArray(stopGroupings) || stopGroupings.length === 0) return null;
+                const toHHMM = (secs) => {
+                    const totalMins = Math.round(secs / 60);
+                    const h = Math.floor(totalMins / 60) % 24;
+                    const m = totalMins % 60;
+                    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                };
+
+                let westSeattleDeps = []; // Seacrest (1_99997) -> Downtown
+                let downtownDeps = [];    // Pier 50 (1_1889) -> West Seattle
+
+                stopGroupings.forEach(group => {
+                    const dirId = String(group.directionId);
+                    const firstStopId = group.stopIds?.[0];
+                    const trips = group.tripsWithStopTimes || group.trips || [];
+
+                    const times = trips
+                        .map(t => t.stopTimes?.[0]?.departureTime)
+                        .filter(val => typeof val === 'number' && val >= 0)
+                        .map(sec => sec < 200000 ? toHHMM(sec) : formatTime(new Date(sec * 1000)));
+
+                    if (dirId === '1' || firstStopId === '1_99997') {
+                        westSeattleDeps.push(...times);
+                    } else if (dirId === '0' || firstStopId === '1_1889') {
+                        downtownDeps.push(...times);
+                    }
+                });
+
+                westSeattleDeps = Array.from(new Set(westSeattleDeps)).sort();
+                downtownDeps = Array.from(new Set(downtownDeps)).sort();
+
+                if (westSeattleDeps.length > 0 && downtownDeps.length > 0) {
+                    return { westSeattle: westSeattleDeps, downtown: downtownDeps };
+                }
+                return null;
+            },
+
+            async refreshLiveVesselOnly() {
+                try {
+                    const [kcmVessel, wsdotVessel, obaVessel] = await Promise.all([
+                        this.fetchKcmLiveVessel(),
+                        this.fetchWsdotVesselLocation(),
+                        this.fetchObaLiveVessel()
+                    ]);
+                    this.state.liveVessel = kcmVessel || wsdotVessel || obaVessel || null;
+                    this.updateStatusBanner();
+                } catch (e) {
+                    this.updateStatusBanner();
+                }
+            },
+
+            async refreshLiveAndSchedule(userInitiated = false) {
+                if (this.state.isSyncingSchedule) return;
+                this.state.isSyncingSchedule = true;
+                this.updateStatusBanner();
+
+                try {
+                    const targetDate = this.state.displayDate || new Date();
+                    const dateKey = this.getDateKey(targetDate);
+                    const schedInfo = this.getScheduleInfoForDate(targetDate);
+
+                    const [kcmVessel, wsdotVessel, obaVessel, stopGroupings] = await Promise.all([
+                        this.fetchKcmLiveVessel(),
+                        this.fetchWsdotVesselLocation(),
+                        this.fetchObaLiveVessel(),
+                        fetchDailySchedule(targetDate)
+                    ]);
+
+                    this.state.liveVessel = kcmVessel || wsdotVessel || obaVessel || null;
+
+                    if (Array.isArray(stopGroupings) && stopGroupings.length > 0) {
+                        this.state.stopGroupings = stopGroupings;
+                        const liveParsed = this.extractScheduleFromGroupings(stopGroupings);
+                        if (liveParsed) {
+                            this.state.liveScheduleMap[dateKey] = liveParsed;
+                            this.state.cachedScheduleByType[schedInfo.type] = liveParsed;
+                            this.state.liveScheduleVerified = true;
+                        }
+                    }
+
+                    this.state.lastScheduleSync = Date.now();
+                    this.saveCachedSyncState();
+                } catch (e) {
+                    if (userInitiated && !this.state.lastScheduleSync) {
+                        this.state.lastScheduleSync = Date.now();
+                    }
+                } finally {
+                    this.state.isSyncingSchedule = false;
+                    this.updateScheduleDisplay();
+                    this.updateStatusBanner();
+                }
+            },
+
+            async syncScheduleForDate(targetDate) {
+                if (!targetDate) return;
+                const dateKey = this.getDateKey(targetDate);
+                if (this.state.liveScheduleMap && this.state.liveScheduleMap[dateKey]) return;
+                try {
+                    const stopGroupings = await fetchDailySchedule(targetDate);
+                    if (Array.isArray(stopGroupings) && stopGroupings.length > 0) {
+                        const liveParsed = this.extractScheduleFromGroupings(stopGroupings);
+                        if (liveParsed) {
+                            const schedInfo = this.getScheduleInfoForDate(targetDate);
+                            this.state.liveScheduleMap[dateKey] = liveParsed;
+                            this.state.cachedScheduleByType[schedInfo.type] = liveParsed;
+                            this.saveCachedSyncState();
+                            if (this.helpers.isSameDay(this.state.displayDate, targetDate)) {
+                                this.updateScheduleDisplay();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Fallback to cached schedule
+                }
             },
             
             update() {
@@ -374,7 +1164,19 @@
                 const currentMinute = now.getMinutes();
                 
                 const onDisplayDay = this.helpers.isSameDay(this.state.displayDate, now);
-                this.dom.dateDisplay.innerHTML = this.helpers.formatTo12HourParts(onDisplayDay ? now : this.state.displayDate, true);
+                if (onDisplayDay) {
+                    this.dom.dateDisplay.replaceChildren(...this.helpers.formatTo12HourNodes(now, true));
+                } else {
+                    const dateSpan = document.createElement('span');
+                    dateSpan.textContent = this.state.displayDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    this.dom.dateDisplay.replaceChildren(dateSpan);
+                }
+                this.ui.updateNavButtons();
+                this.updateExternalSyncFooter();
 
                 if (currentMinute !== this.state.lastUpdatedMinute || this.state.simulatedTime) {
                     if (!this.state.simulatedTime) this.state.lastUpdatedMinute = currentMinute;
@@ -386,16 +1188,31 @@
             },
 
             bindEvents() {
+                const refreshBtn = document.getElementById('refresh-schedule-btn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.refreshLiveAndSchedule(true);
+                    });
+                }
                 this.dom.prevDayBtn.addEventListener('click', () => this.handlers.navigateDay(-1));
                 this.dom.nextDayBtn.addEventListener('click', () => this.handlers.navigateDay(1));
-                this.dom.todayBtn.addEventListener('click', () => this.handlers.resetToToday());
+                if (this.dom.backToTodayBtn) {
+                    this.dom.backToTodayBtn.addEventListener('click', () => this.handlers.resetToToday());
+                }
                 this.dom.sectionWestSeattle.addEventListener('click', (e) => this.handlers.handleSectionClick(e, this.dom.sectionWestSeattle));
                 this.dom.sectionDowntown.addEventListener('click', (e) => this.handlers.handleSectionClick(e, this.dom.sectionDowntown));
                 
                 this.dom.dateDisplay.addEventListener('click', () => this.ui.toggleDatePicker(true));
                 this.dom.datePickerModal.addEventListener('click', (e) => { if(e.target === this.dom.datePickerModal) this.ui.toggleDatePicker(false) });
-                this.dom.prevMonthBtn.addEventListener('click', () => { this.state.calendarDate.setMonth(this.state.calendarDate.getMonth() - 1); this.ui.renderCalendar(); });
-                this.dom.nextMonthBtn.addEventListener('click', () => { this.state.calendarDate.setMonth(this.state.calendarDate.getMonth() + 1); this.ui.renderCalendar(); });
+                this.dom.prevMonthBtn.addEventListener('click', () => {
+                    this.state.calendarDate = new Date(this.state.calendarDate.getFullYear(), this.state.calendarDate.getMonth() - 1, 1);
+                    this.ui.renderCalendar();
+                });
+                this.dom.nextMonthBtn.addEventListener('click', () => {
+                    this.state.calendarDate = new Date(this.state.calendarDate.getFullYear(), this.state.calendarDate.getMonth() + 1, 1);
+                    this.ui.renderCalendar();
+                });
 
                 this.dom.mainContent.addEventListener('click', (e) => this.handlers.handleTimeClick(e));
                 this.dom.gcalCloseBtn.addEventListener('click', () => this.ui.toggleGCalModal(false));
@@ -413,42 +1230,15 @@
             updateScheduleDisplay() {
                 const now = this.helpers.getCurrentTime();
                 const date = this.state.displayDate;
-                const day = date.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
-                const month = date.getMonth(); // 0-11
-                const dayOfMonth = date.getDate();
-                
-                let schedule;
-                let scheduleName = "";
+                const schedInfo = this.getScheduleInfoForDate(date);
+                const dateKey = this.getDateKey(date);
 
-                // Check season: Winter is Oct 11 - Apr 12
-                const isWinter = (month > 9 || (month === 9 && dayOfMonth >= 11)) || // Oct 11 - Dec 31
-                                 (month < 3 || (month === 3 && dayOfMonth <= 12));   // Jan 1 - Apr 12
+                // Look up schedule: (1) live date map -> (2) cached schedule by day type -> (3) static fallback
+                const schedule = (this.state.liveScheduleMap && this.state.liveScheduleMap[dateKey])
+                    || (this.state.cachedScheduleByType && this.state.cachedScheduleByType[schedInfo.type])
+                    || this.SCHEDULES[schedInfo.type];
 
-                if (isWinter) {
-                    if (day > 0 && day < 6) { 
-                        schedule = this.SCHEDULES.winter_weekday; 
-                        scheduleName = "Winter Weekday";
-                    } else { 
-                        schedule = this.SCHEDULES.winter_weekend; 
-                        scheduleName = "Winter Weekend";
-                    }
-                } else { // Summer: Apr 13 - Oct 10
-                    if (day === 5) { // Friday
-                        schedule = this.SCHEDULES.summer_friday; 
-                        scheduleName = "Summer Friday";
-                    } else if (day > 0 && day < 5) { // Mon-Thu
-                        schedule = this.SCHEDULES.summer_weekday; 
-                        scheduleName = "Summer Weekday";
-                    } else if (day === 6) { // Saturday
-                        schedule = this.SCHEDULES.summer_saturday; 
-                        scheduleName = "Summer Saturday";
-                    } else { // Sunday
-                        schedule = this.SCHEDULES.summer_sunday; 
-                        scheduleName = "Summer Sunday";
-                    }
-                }
-                
-                this.dom.scheduleName.textContent = scheduleName;
+                this.dom.scheduleName.textContent = schedInfo.name;
                 this.ui.updateNavButtons();
                 
                 let primaryNextDeparture = null;
@@ -469,6 +1259,7 @@
                 }
                 
                 this.ui.updateCountdown(primaryNextDeparture, now);
+                this.updateStatusBanner();
             },
 
             ui: {
@@ -476,6 +1267,9 @@
                     const secondarySection = primarySection === App.dom.sectionWestSeattle ? App.dom.sectionDowntown : App.dom.sectionWestSeattle;
                     primarySection.classList.add('primary'); primarySection.classList.remove('secondary');
                     secondarySection.classList.add('secondary'); secondarySection.classList.remove('primary');
+                    if (typeof App.updateStatusBanner === 'function') {
+                        App.updateStatusBanner();
+                    }
                 },
                 
                 updateLiveSection(section, departures) { 
@@ -484,14 +1278,14 @@
                     const nextTimeWrapper = section.querySelector('.next-time-wrapper');
                     const nextTimeEl = nextTimeWrapper.querySelector('.next-time'); 
                     const upcomingTimesEl = section.querySelector('.upcoming-times');
-                    upcomingTimesEl.innerHTML = '';
+                    upcomingTimesEl.replaceChildren();
                     
                     const existingIcon = nextTimeWrapper.querySelector('.add-to-calendar-btn');
                     if (existingIcon) existingIcon.remove();
                     
                     if (nextTimeStr) { 
                         const nextDepartureDate = App.helpers.createDateFromTime(nextTimeStr, now);
-                        nextTimeEl.innerHTML = App.helpers.formatTo12HourParts(nextDepartureDate); 
+                        nextTimeEl.replaceChildren(...App.helpers.formatTo12HourNodes(nextDepartureDate)); 
                         nextTimeEl.classList.add('text-green-400'); nextTimeEl.classList.remove('text-red-400'); 
                         
                         nextTimeWrapper.dataset.time = nextTimeStr;
@@ -517,7 +1311,7 @@
                     rowEl.dataset.direction = direction;
                     
                     const timeText = document.createElement('span');
-                    timeText.innerHTML = App.helpers.formatTo12HourParts(App.helpers.createDateFromTime(timeStr, baseDate));
+                    timeText.replaceChildren(...App.helpers.formatTo12HourNodes(App.helpers.createDateFromTime(timeStr, baseDate)));
                     
                     rowEl.appendChild(timeText);
                     rowEl.appendChild(this.createCalendarIcon());
@@ -528,51 +1322,71 @@
                     const iconBtn = document.createElement('button');
                     iconBtn.className = 'add-to-calendar-btn';
                     iconBtn.title = 'Add to calendar';
-                    iconBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>`;
+                    const svgDoc = new DOMParser().parseFromString(
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>`,
+                        'image/svg+xml'
+                    );
+                    iconBtn.appendChild(svgDoc.documentElement);
                     return iconBtn;
                 },
 
                 populateFullSchedule(schedule) {
-                    const formatRow = (time, direction) => {
-                        const departureDate = App.helpers.createDateFromTime(time, App.state.displayDate);
-                        const arrivalDate = new Date(departureDate.getTime() + App.TRIP_DURATION_MINUTES * 60000);
-                        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>`;
-                        return `<div class="schedule-time" data-time="${time}" data-direction="${direction}">
-                                    <div class="text-center">
-                                        <div class="text-lg">${App.helpers.formatTo12HourParts(departureDate)}</div>
-                                        <div class="text-xs text-gray-400 -mt-1">${App.helpers.formatTo12HourParts(arrivalDate)}</div>
-                                    </div>
-                                    <button class="add-to-calendar-btn" title="Add to calendar">${iconSvg}</button>
-                                </div>`;
-                    };
-                    App.dom.fullScheduleWestSeattle.innerHTML = schedule.westSeattle.map(t => formatRow(t, 'To Downtown')).join('');
-                    App.dom.fullScheduleDowntown.innerHTML = schedule.downtown.map(t => formatRow(t, 'To W. Seattle')).join('');
+                    App.dom.fullScheduleWestSeattle.replaceChildren(
+                        ...schedule.westSeattle.map(t => this.createTimeRow(t, 'To Downtown', App.state.displayDate))
+                    );
+                    App.dom.fullScheduleDowntown.replaceChildren(
+                        ...schedule.downtown.map(t => this.createTimeRow(t, 'To W. Seattle', App.state.displayDate))
+                    );
+                    const scrollContainer = App.dom.fullScheduleView.querySelector('.full-schedule-scroll-container');
+                    if (scrollContainer) scrollContainer.scrollTop = 0;
                 },
                 
                 updateNavButtons() {
-                    const isViewingToday = App.helpers.isSameDay(App.state.displayDate, new Date());
-                    App.dom.todayBtn.classList.toggle('hidden', isViewingToday && !App.state.simulatedTime);
-                    App.dom.prevDayBtn.classList.toggle('hidden', isViewingToday);
+                    const now = App.helpers.getCurrentTime();
+                    const isViewingToday = App.helpers.isSameDay(App.state.displayDate, now);
+                    const backWrapper = document.getElementById('backToTodayWrapper');
+                    if (backWrapper) {
+                        backWrapper.classList.toggle('is-visible', !isViewingToday || Boolean(App.state.simulatedTime));
+                    }
+                    if (App.dom.prevDayBtn) {
+                        // Immediately show the back arrow next to the forward arrow when in date mode after advancing date
+                        App.dom.prevDayBtn.style.display = isViewingToday ? 'none' : 'inline-flex';
+                        App.dom.prevDayBtn.disabled = isViewingToday;
+                    }
                 },
 
                 switchView(showLive) {
                     App.dom.liveView.style.maxHeight = showLive ? '500px' : '0'; 
                     App.dom.liveView.style.opacity = showLive ? '1' : '0';
-                    App.dom.fullScheduleView.style.maxHeight = showLive ? '0' : '500px';
+                    App.dom.fullScheduleView.style.maxHeight = showLive ? '0' : 'calc(100dvh - 7.5rem)';
                     App.dom.fullScheduleView.style.opacity = showLive ? '0' : '1';
                 },
 
                 updateCountdown(primaryDeparture, now) {
-                    if (primaryDeparture) {
+                    const liveCountdownEl = document.getElementById('live-countdown');
+                    const isViewingToday = App.helpers.isSameDay(App.state.displayDate, new Date());
+                    const hasLiveVessel = Boolean(App.state.liveVessel);
+                    if (primaryDeparture && isViewingToday) {
+                        if (liveCountdownEl) liveCountdownEl.classList.remove('hidden');
                         const diffMinutes = Math.round((primaryDeparture - now) / 60000);
                         if (diffMinutes <= 0) {
-                            App.dom.countdownTextGroup.classList.add('hidden'); App.dom.boardingNowText.classList.remove('hidden'); App.state.lastAnimatedValue = null;
+                            App.dom.countdownTextGroup.classList.add('hidden');
+                            App.dom.boardingNowText.classList.remove('hidden');
+                            App.state.lastAnimatedValue = null;
                         } else {
-                            App.dom.countdownTextGroup.classList.remove('hidden'); App.dom.boardingNowText.classList.add('hidden'); this.animateCountdownNumber(diffMinutes);
+                            App.dom.countdownTextGroup.classList.remove('hidden');
+                            App.dom.boardingNowText.classList.add('hidden');
+                            this.animateCountdownNumber(diffMinutes);
                         }
                         App.dom.countdownWrapper.classList.remove('hidden');
                     } else {
-                        App.dom.countdownWrapper.classList.add('hidden'); App.state.lastAnimatedValue = null;
+                        if (liveCountdownEl) liveCountdownEl.classList.add('hidden');
+                        if (isViewingToday && hasLiveVessel) {
+                            App.dom.countdownWrapper.classList.remove('hidden');
+                        } else {
+                            App.dom.countdownWrapper.classList.add('hidden');
+                        }
+                        App.state.lastAnimatedValue = null;
                     }
                 },
 
@@ -598,7 +1412,7 @@
                 renderCalendar() {
                     const { calendarGrid, monthYear } = App.dom;
                     const { calendarDate, displayDate } = App.state;
-                    calendarGrid.innerHTML = '';
+                    calendarGrid.replaceChildren();
                     monthYear.textContent = calendarDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
                     
                     ['S','M','T','W','T','F','S'].forEach(day => {
@@ -627,8 +1441,11 @@
                             if (App.helpers.isSameDay(date, displayDate)) dayEl.classList.add('selected');
                             dayEl.addEventListener('click', () => {
                                 App.state.displayDate = date;
+                                App.state.calendarDate = new Date(date.getFullYear(), date.getMonth(), 1);
                                 App.state.simulatedTime = null;
                                 App.updateScheduleDisplay();
+                                App.update();
+                                App.syncScheduleForDate(date);
                                 this.toggleDatePicker(false);
                             });
                         }
@@ -637,7 +1454,7 @@
                 },
                 toggleDatePicker(show) {
                     if (show) {
-                        App.state.calendarDate = new Date(App.state.displayDate);
+                        App.state.calendarDate = new Date(App.state.displayDate.getFullYear(), App.state.displayDate.getMonth(), 1);
                         this.renderCalendar();
                         App.dom.datePickerModal.classList.remove('hidden');
                         App.dom.datePickerModal.classList.add('flex');
@@ -665,15 +1482,31 @@
                     const newDate = new Date(App.state.displayDate);
                     newDate.setDate(newDate.getDate() + offset);
                     if (offset < 0 && !App.helpers.isTodayOrFuture(newDate) && !App.helpers.isSameDay(newDate, new Date())) return;
-                    App.state.simulatedTime = null; App.state.displayDate = newDate; App.state.manualOverride = !App.helpers.isSameDay(newDate, new Date()); App.updateScheduleDisplay();
+                    App.state.simulatedTime = null;
+                    App.state.displayDate = newDate;
+                    App.state.calendarDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+                    App.state.manualOverride = !App.helpers.isSameDay(newDate, new Date());
+                    App.updateScheduleDisplay();
+                    App.update();
+                    App.ui.renderCalendar();
+                    App.syncScheduleForDate(newDate);
                 },
 
                 resetToToday() {
-                    App.state.simulatedTime = null; App.state.displayDate = new Date(); App.state.manualOverride = false; App.updateScheduleDisplay();
+                    const today = new Date();
+                    App.state.simulatedTime = null;
+                    App.state.displayDate = today;
+                    App.state.calendarDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    App.state.manualOverride = false;
+                    App.updateScheduleDisplay();
+                    App.update();
+                    App.ui.renderCalendar();
                 },
 
                 setManualPrimary(section) {
-                    App.state.manualOverride = true; App.ui.setPrimary(section);
+                    App.state.manualOverride = true;
+                    App.ui.setPrimary(section);
+                    App.updateScheduleDisplay();
                 },
 
                 handleSectionClick(e, section) {
@@ -697,8 +1530,14 @@
                     const arrivalDate = new Date(departureDate.getTime() + App.TRIP_DURATION_MINUTES * 60000);
                     const eventEnd = new Date(arrivalDate.getTime() + 25 * 60000);
 
+                    const dateLabel = App.state.displayDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+
                     App.ui.toggleGCalModal(true, {
-                        time: `${App.helpers.formatTo12Hour(eventStart)} - ${App.helpers.formatTo12Hour(eventEnd)}`,
+                        time: `${dateLabel} · ${App.helpers.formatTo12Hour(eventStart)} - ${App.helpers.formatTo12Hour(eventEnd)}`,
                         direction: direction,
                         link: link,
                     });
@@ -724,6 +1563,24 @@
                     const period = parts.pop();
                     const main = parts.join(' ');
                     return `<span>${main}</span><span class="time-period">${period}</span>`;
+                },
+                formatTo12HourNodes(date, includeDate = false) {
+                    let options = { hour: 'numeric', minute: '2-digit', hour12: true };
+                    if (includeDate) {
+                        options.weekday = 'short';
+                        options.month = 'short';
+                        options.day = 'numeric';
+                    }
+                    const formatted = date.toLocaleString('en-US', options);
+                    const parts = formatted.split(' ');
+                    const period = parts.pop();
+                    const main = parts.join(' ');
+                    const mainSpan = document.createElement('span');
+                    mainSpan.textContent = main;
+                    const periodSpan = document.createElement('span');
+                    periodSpan.className = 'time-period';
+                    periodSpan.textContent = period;
+                    return [mainSpan, periodSpan];
                 },
                 generateGCalLink(departureTimeStr, direction, date) {
                     const departureDate = this.createDateFromTime(departureTimeStr, date);
